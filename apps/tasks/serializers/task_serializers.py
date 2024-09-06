@@ -29,7 +29,8 @@ class AllTasksSerializer(serializers.ModelSerializer):
             'priority',
             'project',
             'assignee',
-            'deadline'
+            'deadline',
+            'owner'
         )
 
 
@@ -53,7 +54,8 @@ class CreateUpdateTaskSerializer(serializers.ModelSerializer):
             'project',
             'tags',
             'deadline',
-            'assignee'
+            'assignee',
+            'owner'
         )
 
     def validate_name(self, value: str) -> str:
@@ -125,6 +127,10 @@ class CreateUpdateTaskSerializer(serializers.ModelSerializer):
 class TaskDetailSerializer(serializers.ModelSerializer):
     project = ProjectShortInfoSerializer()
     tags = TagSerializer(many=True, read_only=True)
+    owner = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='email'
+    )
 
     class Meta:
         model = Task

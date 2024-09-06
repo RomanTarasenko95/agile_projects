@@ -1,5 +1,5 @@
-from apps.users.models import User
 from django.db import models
+from apps.users.models import User
 from apps.projects.models.project import Project
 from apps.tasks.choices.statuses import Statuses
 from apps.tasks.choices.priorities import Priority
@@ -7,9 +7,7 @@ from apps.tasks.utils.set_end_of_month import calculate_end_of_month
 
 
 class Task(models.Model):
-    name = models.CharField(
-        max_length=120
-    )
+    name = models.CharField(max_length=120)
     description = models.TextField()
     status = models.CharField(
         max_length=15,
@@ -36,6 +34,13 @@ class Task(models.Model):
         related_name='tasks',
         null=True,
         blank=True
+    )
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_tasks'
     )
 
     class Meta:

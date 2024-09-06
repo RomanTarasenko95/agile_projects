@@ -1,18 +1,23 @@
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import ListCreateAPIView
-from rest_framework.response import Response
-from rest_framework.request import Request
 from rest_framework import status
-from rest_framework.views import APIView
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.pagination import PageNumberPagination
-from apps.tasks.models import Task
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from apps.tasks.serializers.task_serializers import *
+from rest_framework.permissions import IsAuthenticated
+from apps.tasks.permissions import IsOwnerOrReadOnly
 
 
 class TaskViewListCreateGenericView(ListCreateAPIView):
     queryset = Task.objects.all()
     serializer_class = CreateUpdateTaskSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -23,6 +28,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class TasksListAPIView(APIView):
     paginator = StandardResultsSetPagination
+    permission_classes = [IsAuthenticated]
 
     def get_objects(self) -> QuerySet:
         project_name = self.request.query_params.get('project_name')
@@ -64,7 +70,7 @@ class TasksListAPIView(APIView):
         serializer = CreateUpdateTaskSerializer(data=request.data)
 
         if serializer.is_valid(raise_exception=True):
-            serializer.save()
+            serializer.save(owner=request.user)
 
             return Response(
                 serializer.data,
@@ -78,6 +84,8 @@ class TasksListAPIView(APIView):
 
 
 class TaskDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
     def get_object(self):
         return get_object_or_404(Task, pk=self.kwargs['pk'])
 
@@ -124,5 +132,3 @@ class TaskDetailAPIView(APIView):
             },
             status=status.HTTP_204_NO_CONTENT
         )
-
-
